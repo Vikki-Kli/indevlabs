@@ -5,6 +5,8 @@ import java.util.Scanner;
 import java.util.stream.IntStream;
 
 public class Main {
+    public static final String EXCEPTION_DUPLICATE = "В вашем ряде содержатся дубликаты";
+    public static final String EXCEPTION_NOT_ONE_MISSING_NUMBER = "В вашем ряде должно быть одно пропущенное число";
     /*
     Для поиска буду использовать формулу суммы любой натуральной последовательности: среднее арифметическое самого
     малого и самого большого чисел, умноженное на количество чисел последовательности. То, насколько реальная сумма
@@ -13,7 +15,7 @@ public class Main {
     Метод работает исходя из условий, что входной массив состоит только из натуральных чисел, имеет лишь один пропуск и
     все числа умещаются в диапазон int.
     */
-    public static int findMissingNumber(int[] array) {
+    public static String findMissingNumber(int[] array) {
         /*
         Из условий ясно, что ряд чисел может начинаться не с 0, следовательно, нужно найти, с какого же числа он
         начинается и каким заканчивается. Сортировки всех видов займут больше времени, чем просто поиск максимума и
@@ -23,33 +25,57 @@ public class Main {
         найти максимум и минимум, а также их сумму. IntStream же позволит нам работать с примитивами и имеет все
         необходимые методы.
          */
-        //либо в main() либо тут надо было прописать проверку на пустой массив либо на массив с 1 элементом
-        IntSummaryStatistics stats = IntStream.of(array).summaryStatistics();
+        IntSummaryStatistics stats = IntStream.of(array).distinct().summaryStatistics();
+        int count = (int)stats.getCount();
+
+        // Проверка корректности ряда 1
+        if (count != array.length) return EXCEPTION_DUPLICATE;
 
         //Для читаемости кода заведем несколько переменных для важных элементов расчета
         int max = stats.getMax();
         int min = stats.getMin();
-        int count = (int)stats.getCount() + 1; //Добавляю 1, т.к. количество чисел на одно меньше, чем должно быть
+
+        // Проверка корректности ряда 2
+        if (max - min != array.length) return EXCEPTION_NOT_ONE_MISSING_NUMBER;
+
+        count++; //Добавляю 1, т.к. количество чисел на одно меньше, чем должно быть
         long sum = stats.getSum();
         long expectedSum = (max + min) * count / 2;
         int missingNumber = (int)(expectedSum - sum);
 
-        return missingNumber;
+        return String.valueOf(missingNumber);
     }
 
     public static void main(String[] args) {
-        /*
-        При решении полагаюсь на корректность входных данных, но можно также добавить проверки:
-        - Элементов в массиве не меньше двух
-        - Все элементы - натуральные числа либо 0
-        - Все элементы умещаются в int
-        - Пропуск числа есть и только один
-         */
         Scanner scan = new Scanner(System.in);
-        int size = scan.nextInt();
+        int size;
+
+        // Проверка на корректный ввод количества элементов будущего массива
+        while (true) {
+            try {
+                size = Integer.parseInt(scan.next());
+                if (size < 2) throw new RuntimeException();
+                break;
+            }
+            catch (Exception e) {
+                System.out.println("Необходимо ввести целое число не меньше 2");
+            }
+        }
+
         int[] array = new int[size];
+
+        // Проверка на корректный ввод элементов массива
         for (int i = 0; i < size; i++) {
-            array[i] = scan.nextInt();
+            while (true) {
+                try {
+                    array[i] = Integer.parseInt(scan.next());
+                    if (array[i] < 0) throw new RuntimeException();
+                    break;
+                }
+                catch (Exception e) {
+                    System.out.println("Необходимо ввести целое неотрицательное число");
+                }
+            }
         }
 
         System.out.println(findMissingNumber(array));
